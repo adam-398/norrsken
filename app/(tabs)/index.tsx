@@ -1,6 +1,6 @@
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
   const [data, setData] = useState(null);
@@ -41,7 +41,7 @@ export default function HomeScreen() {
 
       try {
         const response = await fetch(
-          `https://api.met.no/weatherapi/nowcast/2.0/complete?lat=${lat}&lon=${lon}`,
+          `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`,
           {
             headers: {
               "User-Agent": "norrsken/1.0 adamhodges@live.co.uk",
@@ -72,43 +72,116 @@ export default function HomeScreen() {
    */
   const current = data.properties.timeseries[0].data.instant.details;
   const temperature = current.air_temperature;
-  const precipiration_rate = current.precipitation_rate;
-  const relative_humidity = current.relative_humidity;
-  const wind_from_direction = current.wind_from_direction;
-  const wind_speed = current.wind_speed;
-  const wind_speed_of_gust = current.wind_speed_of_gust;
+  const precipiration_rate =
+    data.properties.timeseries[0].data.next_1_hours.details
+      .precipitation_amount;
+  const time = data.properties.timeseries[0].time;
+  const date = new Date(time);
+  const readableDate = date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "long",
+  });
+  const readableTime = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const summary =
+    data.properties.timeseries[0].data.next_1_hours.summary.symbol_code;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Weather Data:</Text>
-      <Text style={styles.text}>Temperature: {temperature}°C</Text>
-      <Text style={styles.text}>
-        Precipitation Rate: {precipiration_rate} mm/h
-      </Text>
-      <Text style={styles.text}>Relative Humidity: {relative_humidity}%</Text>
-      <Text style={styles.text}>
-        Wind From Direction: {wind_from_direction}°
-      </Text>
-      <Text style={styles.text}>Wind Speed: {wind_speed} m/s</Text>
-      <Text style={styles.text}>
-        Wind Speed of Gust: {wind_speed_of_gust} m/s
-      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          alignItems: "center",
+          paddingHorizontal: 10,
+        }}
+      >
+        {data.properties.timeseries.slice(0, 12).map((item, index) => {
+          const itemDate = new Date(item.time);
+          const itemReadableDate = itemDate.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "long",
+          });
+          const itemReadableTime = itemDate.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          return (
+            <View
+              key={index}
+              style={styles.card}
+            >
+              <Text style={styles.dateText}>{itemReadableDate}</Text>
+              <Text style={styles.timeText}>{itemReadableTime}</Text>
+              <Text style={styles.tempText}>
+                {item.data.instant.details.air_temperature}°C
+              </Text>
+              <Text style={styles.precipitationText}>
+                {item.data.next_1_hours.details.precipitation_amount} mm/h
+              </Text>
+              <Text style={styles.summaryText}>
+                {item.data.next_1_hours.summary.symbol_code}
+              </Text>
+            </View>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: "center",
+  },
+  card: {
+    backgroundColor: "lightgray",
+    padding: 20,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 50,
+    marginHorizontal: 10,
+    width: 150,
   },
+
   text: {
-    fontSize: 24,
+    fontSize: 15,
     fontWeight: "bold",
-    justifyContent: "center",
-    paddingTop: 50,
+    paddingTop: 10,
     paddingLeft: 20,
+  },
+  dateText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    paddingTop: 0,
+    textAlign: "center",
+  },
+  timeText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    paddingTop: 10,
+    textAlign: "center",
+  },
+  tempText: {
+    fontSize: 25,
+    fontWeight: "bold",
+    paddingTop: 10,
+    textAlign: "center",
+  },
+  precipitationText: {
+    fontSize: 15,
+    fontWeight: "bold",
+    paddingTop: 10,
+    textAlign: "center",
+  },
+  summaryText: {
+    fontSize: 15,
+    fontWeight: "bold",
+    paddingTop: 10,
+    textAlign: "center",
   },
 });
