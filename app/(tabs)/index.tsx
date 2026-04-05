@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -103,9 +104,35 @@ export default function HomeScreen() {
   const auroraForecast = auroraMessage(kPIndex);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.kText}>Aurora forecast: K-Index {kPIndex}</Text>
-      <Text style={styles.kText}>{auroraForecast}</Text>
+    <LinearGradient
+      colors={[
+        "#05080f",
+        "#070c1a",
+        "#0a0f2a",
+        "#0c1540",
+        "#0d1a4a",
+        "#122260",
+        "#1a2d6e",
+        "#223880",
+        "#2a4d8a",
+        "#335a98",
+        "#3d6aaa",
+        "#4d7ab8",
+        "#5a8abf",
+        "#6a97c8",
+        "#7aaad4",
+        "#8abade",
+        "#a0c4e8",
+        "#b8d4f0",
+        "#c8dff0",
+        "#d8e8f0",
+        "#e8c99a",
+        "#f0a060",
+      ]}
+      style={styles.container}
+    >
+      <Text style={styles.kTextFirst}>Aurora forecast: K-Index {kPIndex}</Text>
+      <Text style={styles.kTextSecond}>{auroraForecast}</Text>
       <View style={styles.bottomBar}>
         <ScrollView
           horizontal
@@ -150,13 +177,13 @@ export default function HomeScreen() {
           })}
         </ScrollView>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     backgroundColor: "#1a1a2e",
   },
   bottomBar: {
@@ -180,12 +207,21 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingLeft: 20,
   },
-  kText: {
+  kTextFirst: {
     color: "white",
-    fontSize: 15,
+    fontSize: 23,
     fontWeight: "bold",
     textAlign: "center",
-    padding: 10,
+    paddingTop: 100,
+    padding: 1,
+  },
+  kTextSecond: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    paddingTop: 10,
+    padding: 1,
   },
   dateText: {
     color: "white",
