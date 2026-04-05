@@ -12,6 +12,7 @@ export default function HomeScreen() {
     null,
   );
   const [kIndex, setKIndex] = useState(null);
+  const [locationName, setLocationName] = useState<string | null>(null);
 
   const loadingMessage = "Loading weather data...";
   const errorMessage = "Error loading weather data";
@@ -33,6 +34,13 @@ export default function HomeScreen() {
         setLocation(location);
         lat = location.coords.latitude;
         lon = location.coords.longitude;
+
+        const places = await Location.reverseGeocodeAsync({
+          latitude: lat,
+          longitude: lon,
+        });
+        let cityName = places[0].city || "Unknown location";
+        setLocationName(cityName);
       } catch (e) {
         console.log("location error, using backup coordinates:", e);
       }
@@ -131,6 +139,7 @@ export default function HomeScreen() {
       ]}
       style={styles.container}
     >
+      <Text style={styles.locationText}>{locationName}</Text>
       <Text style={styles.kTextFirst}>Aurora forecast: K-Index {kPIndex}</Text>
       <Text style={styles.kTextSecond}>{auroraForecast}</Text>
       <View style={styles.bottomBar}>
@@ -191,13 +200,21 @@ const styles = StyleSheet.create({
     bottom: 40,
   },
   card: {
-    backgroundColor: "#1a2f4a",
+    backgroundColor: "#2a4f80",
     padding: 20,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     marginHorizontal: 10,
     width: 150,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 10,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 
   text: {
@@ -206,6 +223,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     paddingTop: 10,
     paddingLeft: 20,
+  },
+  locationText: {
+    color: "white",
+    fontSize: 30,
+    fontWeight: "bold",
+    textAlign: "center",
+    paddingTop: 100,
+    padding: 1,
   },
   kTextFirst: {
     color: "white",
