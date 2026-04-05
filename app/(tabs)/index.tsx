@@ -1,6 +1,7 @@
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { auroraMessage } from "../utils/auroraMessage";
 
 export default function HomeScreen() {
   const [data, setData] = useState(null);
@@ -9,6 +10,7 @@ export default function HomeScreen() {
   const [location, setLocation] = useState<Location.LocationObject | null>(
     null,
   );
+  const [kIndex, setKIndex] = useState(null);
 
   const loadingMessage = "Loading weather data...";
   const errorMessage = "Error loading weather data";
@@ -51,14 +53,28 @@ export default function HomeScreen() {
       } finally {
         setLoading(false);
       }
-    };
 
+      try {
+        const response = await fetch(
+          `https://services.swpc.noaa.gov/json/planetary_k_index_1m.json`,
+        );
+        const json = await response.json();
+        setKIndex(json);
+      } catch (error) {
+        console.log("k-index fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchWeatherandLocation();
   }, []);
 
   if (loading) return <Text style={styles.text}>{loadingMessage}</Text>;
   if (error) return <Text style={styles.text}>{errorMessage}</Text>;
   if (!data) return <Text style={styles.text}>No data available</Text>;
+
+  if (!kIndex)
+    return <Text style={styles.text}>No K-Index data available</Text>;
 
   /**
    * Extract the relevant weather data from the API response.
@@ -83,8 +99,13 @@ export default function HomeScreen() {
   const summary =
     data.properties.timeseries[0].data.next_1_hours.summary.symbol_code;
 
+  const kPIndex = kIndex[kIndex.length - 1].kp_index;
+  const auroraForecast = auroraMessage(kPIndex);
+
   return (
     <View style={styles.container}>
+      <Text style={styles.kText}>Aurora forecast: K-Index {kPIndex}</Text>
+      <Text style={styles.kText}>{auroraForecast}</Text>
       <View style={styles.bottomBar}>
         <ScrollView
           horizontal
@@ -136,6 +157,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
+    backgroundColor: "#1a1a2e",
   },
   bottomBar: {
     position: "absolute",
@@ -157,6 +179,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     paddingTop: 10,
     paddingLeft: 20,
+  },
+  kText: {
+    color: "white",
+    fontSize: 15,
+    fontWeight: "bold",
+    textAlign: "center",
+    padding: 10,
   },
   dateText: {
     color: "white",
