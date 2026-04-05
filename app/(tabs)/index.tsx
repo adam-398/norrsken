@@ -13,9 +13,12 @@ export default function HomeScreen() {
   );
   const [kIndex, setKIndex] = useState(null);
   const [locationName, setLocationName] = useState<string | null>(null);
+  const [sunriseData, setSunriseData] = useState(null);
 
   const loadingMessage = "Loading weather data...";
   const errorMessage = "Error loading weather data";
+
+  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     const fetchWeatherandLocation = async () => {
@@ -35,6 +38,7 @@ export default function HomeScreen() {
         lat = location.coords.latitude;
         lon = location.coords.longitude;
 
+        // Reverse geocode to get city name
         const places = await Location.reverseGeocodeAsync({
           latitude: lat,
           longitude: lon,
@@ -44,7 +48,7 @@ export default function HomeScreen() {
       } catch (e) {
         console.log("location error, using backup coordinates:", e);
       }
-
+      // Fetch weather data
       try {
         const response = await fetch(
           `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`,
@@ -63,6 +67,7 @@ export default function HomeScreen() {
         setLoading(false);
       }
 
+      // Fetch K-Index data
       try {
         const response = await fetch(
           `https://services.swpc.noaa.gov/json/planetary_k_index_1m.json`,
@@ -71,6 +76,24 @@ export default function HomeScreen() {
         setKIndex(json);
       } catch (error) {
         console.log("k-index fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+
+      // Fetch sunrise/sunset data
+      try {
+        const response = await fetch(
+          `https://api.met.no/weatherapi/sunrise/3.0/sun?lat=${lat}&lon=${lon}&date=${today}&offset=+01:00`,
+          {
+            headers: {
+              "User-Agent": "norrsken/1.0 adamhodges@live.co.uk",
+            },
+          },
+        );
+        const json = await response.json();
+        setSunriseData(json);
+      } catch (error) {
+        console.log("sunrise fetch error:", error);
       } finally {
         setLoading(false);
       }
@@ -84,6 +107,12 @@ export default function HomeScreen() {
 
   if (!kIndex)
     return <Text style={styles.text}>No K-Index data available</Text>;
+
+  if (!locationName)
+    return <Text style={styles.text}>No location data available</Text>;
+
+  if (!sunriseData || !sunriseData)
+    return <Text style={styles.text}>No sunrise/sunset data available</Text>;
 
   /**
    * Extract the relevant weather data from the API response.
@@ -108,8 +137,25 @@ export default function HomeScreen() {
   const summary =
     data.properties.timeseries[0].data.next_1_hours.summary.symbol_code;
 
+  // Extract the latest K-Index value from the fetched K-Index data and use it to determine the aurora forecast message.
   const kPIndex = kIndex[kIndex.length - 1].kp_index;
   const auroraForecast = auroraMessage(kPIndex);
+
+  // Extract sunrise and sunset times from the fetched sunrise/sunset data to display in the UI.
+  const sunriseTime = sunriseData.properties.sunrise.time;
+  const sunsetTime = sunriseData.properties.sunset.time;
+
+  const sunriseDate = new Date(sunriseTime);
+  const sunsetDate = new Date(sunsetTime);
+
+  const readableSunriseTime = sunriseDate.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const readableSunsetTime = sunsetDate.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
     <LinearGradient
@@ -140,6 +186,8 @@ export default function HomeScreen() {
       style={styles.container}
     >
       <Text style={styles.locationText}>{locationName}</Text>
+      <Text style={styles.sunText}>Sunrise: {readableSunriseTime}</Text>
+      <Text style={styles.sunText}>Sunset: {readableSunsetTime}</Text>
       <Text style={styles.kTextFirst}>Aurora forecast: K-Index {kPIndex}</Text>
       <Text style={styles.kTextSecond}>{auroraForecast}</Text>
       <View style={styles.bottomBar}>
@@ -226,27 +274,34 @@ const styles = StyleSheet.create({
   },
   locationText: {
     color: "white",
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
     paddingTop: 100,
-    padding: 1,
+    paddingBottom: 5,
+  },
+  sunText: {
+    color: "white",
+    fontSize: 16,
+    textAlign: "center",
+    opacity: 0.8,
+    paddingTop: 4,
   },
   kTextFirst: {
     color: "white",
-    fontSize: 23,
+    fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
-    paddingTop: 100,
-    padding: 1,
+    paddingTop: 20,
+    opacity: 0.8,
   },
   kTextSecond: {
     color: "white",
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
-    paddingTop: 10,
-    padding: 1,
+    paddingTop: 6,
+    opacity: 0.8,
   },
   dateText: {
     color: "white",
