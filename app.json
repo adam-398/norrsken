@@ -30,6 +30,7 @@
       "expo-router",
       [
         "expo-splash-screen",
+
         {
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
@@ -38,6 +39,12 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
         }
       ]
     ],

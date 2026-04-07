@@ -2,18 +2,15 @@ import * as Location from "expo-location";
 import { useEffect, useState } from "react";
 
 export function useWeatherData() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState<any>(true);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(
     null,
   );
   const [kIndex, setKIndex] = useState(null);
   const [locationName, setLocationName] = useState<string | null>(null);
-  const [sunriseData, setSunriseData] = useState(null);
-
-  const loadingMessage = "Loading weather data...";
-  const errorMessage = "Error loading weather data";
+  const [sunriseData, setSunriseData] = useState<any>(null);
 
   const today = new Date().toISOString().split("T")[0];
 

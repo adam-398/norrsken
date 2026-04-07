@@ -4,26 +4,17 @@ import { useWeatherData } from "../../hooks/useWeatherData";
 import { auroraMessage } from "../../utils/auroraMessage";
 
 export default function HomeScreen() {
-  const {
-    data,
-    loading,
-    location,
-    error,
-    kIndex,
-    locationName,
-    sunriseData,
-    loadingMessage,
-    errorMessage,
-  } = useWeatherData();
+  const { data, loading, error, kIndex, locationName, sunriseData } =
+    useWeatherData();
 
-  if (loading) return <Text style={styles.text}>{loadingMessage}</Text>;
-  if (error) return <Text style={styles.text}>{errorMessage}</Text>;
+  if (loading) return <Text style={styles.text}>Loading weather data...</Text>;
+  if (error) return <Text style={styles.text}>Error loading weather data</Text>;
   if (!data) return <Text style={styles.text}>No data available</Text>;
 
   if (!kIndex)
     return <Text style={styles.text}>No K-Index data available</Text>;
 
-  if (!sunriseData || !sunriseData)
+  if (!sunriseData || !sunriseData.properties)
     return <Text style={styles.text}>No sunrise/sunset data available</Text>;
 
   /**
@@ -40,6 +31,7 @@ export default function HomeScreen() {
   const date = new Date(time);
   const readableDate = date.toLocaleDateString("en-GB", {
     day: "2-digit",
+
     month: "long",
   });
   const readableTime = date.toLocaleTimeString("en-GB", {
@@ -112,38 +104,40 @@ export default function HomeScreen() {
             paddingHorizontal: 10,
           }}
         >
-          {data.properties.timeseries.slice(0, 12).map((item, index) => {
-            const iconUrl = `https://raw.githubusercontent.com/metno/weathericons/main/weather/png/${item.data.next_1_hours.summary.symbol_code}.png`;
-            const itemDate = new Date(item.time);
-            const itemReadableDate = itemDate.toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "long",
-            });
-            const itemReadableTime = itemDate.toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+          {data.properties.timeseries
+            .slice(0, 12)
+            .map((item: any, index: number) => {
+              const iconUrl = `https://raw.githubusercontent.com/metno/weathericons/main/weather/png/${item.data.next_1_hours.summary.symbol_code}.png`;
+              const itemDate = new Date(item.time);
+              const itemReadableDate = itemDate.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "long",
+              });
+              const itemReadableTime = itemDate.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
 
-            return (
-              <View
-                key={index}
-                style={styles.card}
-              >
-                <Text style={styles.dateText}>{itemReadableDate}</Text>
-                <Text style={styles.timeText}>{itemReadableTime}</Text>
-                <Text style={styles.tempText}>
-                  {item.data.instant.details.air_temperature}°C
-                </Text>
-                <Text style={styles.precipitationText}>
-                  {item.data.next_1_hours.details.precipitation_amount} mm/h
-                </Text>
-                <Image
-                  source={{ uri: iconUrl }}
-                  style={{ width: 75, height: 75, marginTop: 10 }}
-                />
-              </View>
-            );
-          })}
+              return (
+                <View
+                  key={index}
+                  style={styles.card}
+                >
+                  <Text style={styles.dateText}>{itemReadableDate}</Text>
+                  <Text style={styles.timeText}>{itemReadableTime}</Text>
+                  <Text style={styles.tempText}>
+                    {item.data.instant.details.air_temperature}°C
+                  </Text>
+                  <Text style={styles.precipitationText}>
+                    {item.data.next_1_hours.details.precipitation_amount} mm/h
+                  </Text>
+                  <Image
+                    source={{ uri: iconUrl }}
+                    style={{ width: 75, height: 75, marginTop: 10 }}
+                  />
+                </View>
+              );
+            })}
         </ScrollView>
       </View>
     </LinearGradient>
