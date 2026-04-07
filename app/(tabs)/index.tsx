@@ -1,105 +1,20 @@
 import { LinearGradient } from "expo-linear-gradient";
-import * as Location from "expo-location";
-import { useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-import { auroraMessage } from "../utils/auroraMessage";
+import { useWeatherData } from "../../hooks/useWeatherData";
+import { auroraMessage } from "../../utils/auroraMessage";
 
 export default function HomeScreen() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [location, setLocation] = useState<Location.LocationObject | null>(
-    null,
-  );
-  const [kIndex, setKIndex] = useState(null);
-  const [locationName, setLocationName] = useState<string | null>(null);
-  const [sunriseData, setSunriseData] = useState(null);
-
-  const loadingMessage = "Loading weather data...";
-  const errorMessage = "Error loading weather data";
-
-  const today = new Date().toISOString().split("T")[0];
-
-  useEffect(() => {
-    const fetchWeatherandLocation = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setError("Permission to access location was denied");
-        setLoading(false);
-        return;
-      }
-
-      let lat = 66.0;
-      let lon = 13.0;
-
-      try {
-        let location = await Location.getCurrentPositionAsync({});
-        setLocation(location);
-        lat = location.coords.latitude;
-        lon = location.coords.longitude;
-
-        // Reverse geocode to get city name
-        const places = await Location.reverseGeocodeAsync({
-          latitude: lat,
-          longitude: lon,
-        });
-        let cityName = places[0].city || "Unknown location";
-        setLocationName(cityName);
-      } catch (e) {
-        console.log("location error, using backup coordinates:", e);
-      }
-      // Fetch weather data
-      try {
-        const response = await fetch(
-          `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`,
-          {
-            headers: {
-              "User-Agent": "norrsken/1.0 adamhodges@live.co.uk",
-            },
-          },
-        );
-        const json = await response.json();
-        setData(json);
-      } catch (error) {
-        console.log("weather fetch error:", error);
-        setError(String(error));
-      } finally {
-        setLoading(false);
-      }
-
-      // Fetch K-Index data
-      try {
-        const response = await fetch(
-          `https://services.swpc.noaa.gov/json/planetary_k_index_1m.json`,
-        );
-        const json = await response.json();
-        setKIndex(json);
-      } catch (error) {
-        console.log("k-index fetch error:", error);
-      } finally {
-        setLoading(false);
-      }
-
-      // Fetch sunrise/sunset data
-      try {
-        const response = await fetch(
-          `https://api.met.no/weatherapi/sunrise/3.0/sun?lat=${lat}&lon=${lon}&date=${today}&offset=+01:00`,
-          {
-            headers: {
-              "User-Agent": "norrsken/1.0 adamhodges@live.co.uk",
-            },
-          },
-        );
-        const json = await response.json();
-        setSunriseData(json);
-      } catch (error) {
-        console.log("sunrise fetch error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchWeatherandLocation();
-  }, []);
+  const {
+    data,
+    loading,
+    location,
+    error,
+    kIndex,
+    locationName,
+    sunriseData,
+    loadingMessage,
+    errorMessage,
+  } = useWeatherData();
 
   if (loading) return <Text style={styles.text}>{loadingMessage}</Text>;
   if (error) return <Text style={styles.text}>{errorMessage}</Text>;
@@ -107,9 +22,6 @@ export default function HomeScreen() {
 
   if (!kIndex)
     return <Text style={styles.text}>No K-Index data available</Text>;
-
-  if (!locationName)
-    return <Text style={styles.text}>No location data available</Text>;
 
   if (!sunriseData || !sunriseData)
     return <Text style={styles.text}>No sunrise/sunset data available</Text>;
@@ -185,7 +97,7 @@ export default function HomeScreen() {
       ]}
       style={styles.container}
     >
-      <Text style={styles.locationText}>{locationName}</Text>
+      <Text style={styles.locationText}>{locationName ?? "Harads"}</Text>
       <Text style={styles.sunText}>Sunrise: {readableSunriseTime}</Text>
       <Text style={styles.sunText}>Sunset: {readableSunsetTime}</Text>
       <Text style={styles.kTextFirst}>Aurora forecast: K-Index {kPIndex}</Text>
@@ -274,7 +186,7 @@ const styles = StyleSheet.create({
   },
   locationText: {
     color: "white",
-    fontSize: 32,
+    fontSize: 35,
     fontWeight: "bold",
     textAlign: "center",
     paddingTop: 100,
@@ -282,14 +194,14 @@ const styles = StyleSheet.create({
   },
   sunText: {
     color: "white",
-    fontSize: 16,
+    fontSize: 20,
     textAlign: "center",
     opacity: 0.8,
     paddingTop: 4,
   },
   kTextFirst: {
     color: "white",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
     paddingTop: 20,
